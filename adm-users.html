@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Users | Luna Admin</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script><script src="adm.js"></script></head><body>
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span class="bname">Luna Admin</span></div></div></header>
+<main class="wrap"><div id="nav" style="margin-bottom:1.1rem;display:flex;gap:.4rem;flex-wrap:wrap"></div><div class="panel"><div class="bar2"><div><h1>Users &amp; accounts</h1><p class="sub" style="margin:.2rem 0 0">Create any account and give any plan. No payment needed.</p></div><button class="btn" onclick="openAP('create')">+ New account</button></div>
+<div class="apbox" id="ap" hidden><h3 id="aptitle"></h3><div id="apsubs"></div>
+<div class="two" id="apname"><label class="field"><span>Username</span><input id="an" autocomplete="off"></label><label class="field"><span>Password (at least 8 characters)</span><input id="apw" autocomplete="off"></label></div>
+<label class="field" id="aemail"><span>Email (optional)</span><input id="ae" type="email" autocomplete="off"></label>
+<div id="aplan"><div class="two"><label class="field"><span>Plan</span><select id="apl" onchange="planUI()"></select></label><label class="field" id="agbf"><span>GB per month</span><input id="agb" type="number" min="1" value="10"></label></div>
+<div class="two"><label class="field" id="amof"><span>Length</span><select id="amo"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option><option value="0">No end date</option></select></label><label class="field" id="asf"><span>Team accounts</span><input id="asb" type="number" min="0" value="2"></label></div></div>
+<div class="alert" id="aerr" hidden></div><div style="display:flex;gap:.5rem"><button class="btn" onclick="saveAP()">Save</button><button class="btn ghost" onclick="closeAP()">Close</button></div></div>
+<div class="two" style="grid-template-columns:1fr 200px auto;align-items:end"><label class="field"><span>Search (name, email, IP)</span><input id="q" onkeydown="if(event.key==='Enter')load(1)"></label>
+<label class="field"><span>Show</span><select id="f" onchange="load(1)"><option value="">All</option><option value="free">Free</option><option value="paid">Paid</option><option value="unverified">Unverified</option><option value="disabled">Disabled</option></select></label><button class="btn" onclick="load(1)">Search</button></div>
+<div class="scroll"><table><thead><tr><th>User</th><th>Plan</th><th>Usage</th><th>Status</th><th></th></tr></thead><tbody id="t"></tbody></table></div><div id="pg"></div></div></main><script>let R=[],AP={mode:'',row:null};
+async function load(p=1){try{const r=await api('adm_users&page='+p+'&f='+g('#f').value+'&q='+encodeURIComponent(g('#q').value));R=r.rows;
+g('#t').innerHTML=R.map((u,i)=>{const pct=+u.quota_bytes?Math.min(100,u.used_bytes/u.quota_bytes*100):0;
+return `<tr><td><b>${esc(u.username)}</b><br><small>${esc(u.email||'')}${u.reg_ip?' · '+esc(u.reg_ip):''}<br>Joined ${new Date(+u.created_at).toLocaleDateString()} · ${u.txn} transfers</small></td>
+<td>${u.parent_id?'<span class="chip">Team of '+esc(u.parent_name)+'</span>':u.plan_gb?'<span class="chip ok">'+esc(PN[u.plan_type]||'Paid')+' '+u.plan_gb+' GB</span><br><small>'+(u.plan_until?'until '+new Date(+u.plan_until).toLocaleDateString():'no end date')+'</small>':'<span class="chip">Free</span><br><small>'+u.free_resets+' refresh(es) used</small>'}</td>
+<td>${u.parent_id?'<small>Shared with team</small>':fB(+u.used_bytes)+' / '+fB(+u.quota_bytes)+'<div class="meter"><i style="width:'+pct+'%"></i></div>'}</td>
+<td>${u.active?'':'<span class="chip bad">disabled</span> '}${+u.email_verified?'':'<span class="chip bad">unverified</span> '}${+u.dups?'<span class="chip bad">⚠ '+u.dups+' duplicate</span>':''}</td>
+<td class="act">${u.parent_id?'':`<button class="btn ghost sm" onclick="openAP('grant',${i})">Plan</button> `}${+u.sub_cap?`<button class="btn ghost sm" onclick="openAP('sub',${i})">Team ${u.subs}/${u.sub_cap}</button> `:''}<button class="btn ghost sm" onclick="tog(${u.id},${u.active?0:1})">${u.active?'Disable':'Enable'}</button></td></tr>`}).join('');g('#pg').innerHTML=pager(r.total,25,p,'load')}catch(e){}}
+async function tog(id,a){await api('users_update',{id,active:!!a});load(1)}
+function planUI(){const p=g('#apl').value;g('#agbf').hidden=!(p==='gb'||p==='custom');g('#asf').hidden=p!=='custom';g('#amof').hidden=p==='free'}
+function openAP(mode,i){AP={mode,row:i==null?null:R[i]};g('#ap').hidden=false;g('#aerr').hidden=true;
+g('#aptitle').textContent=mode==='create'?'New account':mode==='grant'?'Plan for '+AP.row.username+' (no payment needed)':'Team accounts of '+AP.row.username;
+g('#apname').hidden=mode==='grant';g('#aemail').hidden=mode!=='create';g('#aplan').hidden=mode==='sub';g('#an').value=g('#apw').value=g('#ae').value='';
+g('#apsubs').innerHTML='';if(mode==='sub')subsList();planUI();g('#ap').scrollIntoView({behavior:'smooth',block:'nearest'})}
+function closeAP(){g('#ap').hidden=true}
+async function subsList(){const s=await api('adm_subs&parent='+AP.row.id);g('#apsubs').innerHTML=s.map(x=>`<div class="tcard"><div class="tbody"><b>${esc(x.username)}</b><div class="tmeta">Sent this month: ${fB(+x.used_bytes)}</div></div><div class="tact"><button class="btn ghost sm" onclick="subTog(${x.id},${x.active?0:1})">${x.active?'Disable':'Enable'}</button><button class="btn danger sm" onclick="subDel(${x.id})">Delete</button></div></div>`).join('')||'<p class="hint">No team accounts yet.</p>'}
+async function subTog(id,a){await api('users_update',{id,active:!!a});subsList()}
+async function subDel(id){if(confirm('Delete this team account and its files?')){await api('users_delete',{id});subsList();load(1)}}
+async function saveAP(){g('#aerr').hidden=true;const m=AP.mode,b={plan:g('#apl').value,gb:+g('#agb').value,months:+g('#amo').value,subs:+g('#asb').value};
+try{if(m==='create'){await api('adm_account_create',{...b,username:g('#an').value.trim(),password:g('#apw').value,email:g('#ae').value.trim()});closeAP()}
+else if(m==='grant'){await api('adm_grant',{...b,id:AP.row.id});closeAP()}
+else{await api('adm_sub_create',{parent:AP.row.id,username:g('#an').value.trim(),password:g('#apw').value});g('#an').value=g('#apw').value='';subsList()}load(1)}
+catch(e){g('#aerr').textContent=e.message;g('#aerr').hidden=false}}
+(async()=>{if(!await guard())return;const p=await api('plans');g('#apl').innerHTML=[['free','Free'],['gb','Pay per GB'],...p.tiers.map(t=>[t.key,t.name+' ('+t.gb+' GB, '+t.subs+' team accounts)']),['custom','Custom (you choose GB and team accounts)']].map(([k,n])=>`<option value="${k}">${esc(n)}</option>`).join('');load(1)})()</script></body></html>

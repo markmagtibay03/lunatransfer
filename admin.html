@@ -1,0 +1,125 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin | Luna Transfer</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script><script src="login-ui.js"></script><script src="crypto.js"></script></head><body data-title="a.title">
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span class="bname">Luna Transfer</span></div>
+<div class="right"><span id="langslot"></span><a class="btn sm" href="adm-home.php">Admin console</a><a class="btn ghost sm" id="mine" href="account.php" hidden data-i="a.my_account"></a><button class="btn ghost sm" id="out" hidden onclick="logout()" data-i="logout">Log out</button></div></div></header>
+
+<main class="wrap lg" id="login" hidden>
+<div class="lcard"><aside class="lside"><svg class="lmoon" viewBox="0 0 150 150" aria-hidden="true"><defs><clipPath id="lmc"><circle cx="75" cy="75" r="70"/></clipPath></defs><circle cx="75" cy="75" r="70" fill="#f4c64e"/><g clip-path="url(#lmc)"><circle cx="112" cy="62" r="66" fill="#141745"/></g><circle cx="75" cy="75" r="70" fill="none" stroke="#3a3f9b" stroke-width="2"/></svg><h2 data-i="l.hero"></h2><p data-i="l.hero_sub"></p></aside>
+<section class="lform"><h1 data-i="a.login">Log in</h1><p class="sub" data-i="a.login_sub"></p>
+<label class="field"><span data-i="a.username"></span><input type="text" id="u" value="admin" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+<label class="field"><span data-i="a.password"></span><div class="pwrap"><input type="password" id="p" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"><button type="button" id="pwtoggle" aria-pressed="false"></button></div></label>
+<label class="field" id="codebox" hidden><span data-i="a.code"></span><input type="text" id="lc" inputmode="numeric" autocomplete="one-time-code" maxlength="8" onkeydown="if(event.key==='Enter')login()"></label>
+<button class="btn block" id="lbtn" onclick="login()" data-i="a.login">Log in</button><div class="alert" id="lerr" role="alert" hidden></div></section></div></main>
+
+<main class="wrap" id="main" hidden>
+<p><a class="btn ghost sm" href="adm-home.php">← Admin console</a></p>
+<div class="alert note" id="pubwarn" hidden style="margin:0 0 1.25rem"></div>
+<div class="stats" id="sum"></div>
+<div class="grid">
+ <aside class="panel"><h2 data-i="a.create"></h2>
+  <p class="sub" data-i="a.create_sub"></p>
+  <label class="field"><span data-i="a.label"></span><input type="text" id="label" data-ip="a.label_ph"></label>
+  <div class="two"><label class="field"><span data-i="a.max"></span><input type="number" id="mb" value="50" min="1"></label>
+  <label class="field"><span data-i="a.valid"></span><input type="number" id="hrs" value="24" min="1"></label></div>
+  <div class="two"><label class="field"><span data-i="a.keep"></span><input type="number" id="days" value="7" min="1"></label>
+  <label class="field"><span data-i="a.dllimit"></span><input type="number" id="dl" value="0" min="0"></label></div>
+  <p class="hint" style="margin:-.4rem 0 .9rem" data-i="a.dlhint"></p>
+  <label class="check"><input type="checkbox" id="one"><span><span data-i="a.one"></span><small data-i="a.one_sub"></small></span></label>
+  <button class="btn block" onclick="createLink()" data-i="a.make"></button><div class="alert" id="cerr" hidden></div></aside>
+ <section>
+  <div class="panel"><h2 data-i="a.accounts"></h2><p class="sub" data-i="a.accounts_sub"></p>
+   <div class="inline">
+    <label class="field"><span data-i="a.username"></span><input type="text" id="nu" autocomplete="off"></label>
+    <label class="field"><span data-i="a.acc_pass"></span><input type="password" id="np" autocomplete="new-password"></label>
+    <label class="field"><span data-i="a.acc_quota"></span><input type="number" id="nq" value="500" min="1"></label>
+    <button class="btn" onclick="createUser()" data-i="a.acc_make"></button></div>
+   <label class="check" style="margin-top:-.3rem"><input type="checkbox" id="nadmin"><span><span data-i="a.new_admin"></span><small data-i="a.new_admin_d"></small></span></label>
+   <div class="alert" id="uerr" hidden style="margin:0 0 1rem"></div>
+   <div class="scroll"><table><thead><tr><th data-i="a.th_account"></th><th data-i="a.th_quota"></th><th data-i="a.th_used"></th><th data-i="a.th_status"></th><th></th></tr></thead><tbody id="users"></tbody></table></div></div>
+  <div class="panel"><h2 data-i="a.links"></h2><div id="links"></div></div>
+  <div class="panel"><h2 data-i="a.files"></h2><p class="sub" data-i="a.files_sub"></p>
+   <div class="scroll"><table><thead><tr><th data-i="a.th_link"></th><th data-i="a.th_owner"></th><th data-i="a.th_size"></th><th data-i="a.th_up"></th><th data-i="a.th_dl"></th><th data-i="a.th_del"></th><th></th></tr></thead><tbody id="files"></tbody></table></div></div>
+  <div class="panel"><h2 data-i="a.activity"></h2><div class="scroll"><table><thead><tr><th data-i="c.act_time"></th><th data-i="a.th_account"></th><th data-i="c.act_what"></th><th data-i="c.act_detail"></th><th>IP</th></tr></thead><tbody id="acts"></tbody></table></div></div>
+ </section></div></main>
+
+<script>
+let PUB='';
+const api=async(action,{method='GET',body,query=''}={})=>{
+ const r=await fetch('api.php?action='+action+query,{method,headers:{'Content-Type':'application/json','X-Luna':'1'},body:body?JSON.stringify(body):undefined});
+ if(r.status===401&&action!=='login'){show(false);throw Object.assign(new Error('login'),{code:'login'})}
+ const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(errText(j)),{code:j.error});return j};
+const show=m=>{$('#main').hidden=!m;$('#login').hidden=m;$('#out').hidden=!m;$('#mine').hidden=!m};
+const msg=(id,s)=>{$(id).textContent=s||'';$(id).hidden=!s};
+const base=f=>pageUrl(f,PUB);
+function pubWarn(){const h=location.hostname,w=$('#pubwarn');const local=['localhost','127.0.0.1','::1','[::1]'].includes(h);w.hidden=!(local&&!PUB);w.textContent=L('a.localhost_warn',{host:h})}
+async function login(){try{await api('login',{method:'POST',body:{username:$('#u').value,password:$('#p').value,code:$('#lc').value}});msg('#lerr');$('#codebox').hidden=true;$('#lc').value='';start()}
+ catch(e){if(e.code==='code_required')$('#codebox').hidden=false;msg('#lerr',e.message)}}
+async function logout(){await api('logout',{method:'POST'});show(false)}
+async function createLink(){
+ try{await api('links_create',{method:'POST',body:{label:$('#label').value,maxMB:$('#mb').value,expiryHours:$('#hrs').value,retentionDays:$('#days').value,maxDownloads:$('#dl').value,oneTime:$('#one').checked}});
+  msg('#cerr');$('#label').value='';refresh()}catch(e){msg('#cerr',e.message)}}
+async function createUser(){
+ try{await api('users_create',{method:'POST',body:{username:$('#nu').value,password:$('#np').value,quotaMB:$('#nq').value,role:$('#nadmin').checked?'admin':'user'}});msg('#uerr');$('#nu').value='';$('#np').value='';$('#nadmin').checked=false;refresh()}catch(e){msg('#uerr',e.message)}}
+async function copy(s,b){await navigator.clipboard.writeText(s);const o=b.textContent;b.textContent=L('copied');setTimeout(()=>b.textContent=o,1400)}
+async function delLink(s){if(confirm(L('a.confirm_link'))){await api('links_delete',{method:'POST',body:{token:s}});refresh()}}
+async function delFile(id){if(confirm(L('a.confirm_file'))){await api('file_delete',{method:'POST',body:{id}});refresh()}}
+const meter=(u,q)=>{const m=el('div','meter'+(u>=q?' full':u>=q*.8?' warn':'')),i=el('i');i.style.width=Math.min(100,q?u/q*100:0)+'%';m.append(i);return m};
+async function upd(u,body){try{await api('users_update',{method:'POST',body:{id:u.id,...body}});msg('#uerr');refresh()}catch(e){msg('#uerr',e.message)}}
+async function resetPw(u){const p=prompt(L('a.acc_prompt',{name:u.username}));if(!p)return;try{await api('users_update',{method:'POST',body:{id:u.id,password:p}});msg('#uerr')}catch(e){msg('#uerr',e.message)}}
+async function delUser(u){if(confirm(L('a.acc_del_confirm',{name:u.username}))){try{await api('users_delete',{method:'POST',body:{id:u.id}});msg('#uerr');refresh()}catch(e){msg('#uerr',e.message)}}}
+const open_=new Set();
+function userRows(u,tb){
+ const tr=document.createElement('tr'),isU=u.role==='user';
+ const c1=el('td','name',u.username);c1.append(' ',el('span','chip'+(isU?'':' ok'),isU?L('a.role_user'):L('a.role_admin')));if(u.totp)c1.append(' ',el('span','chip','2FA'));
+ const sub=el('div','',L('a.acc_files',{n:u.files})+(u.expiresAt?' · '+L('a.acc_expires',{date:DT(u.expiresAt)}):''));sub.style.cssText='font-weight:400;color:var(--muted);font-size:.82rem';c1.append(sub);
+ const c2=el('td','',isU?fmtSize(u.quotaBytes)+(u.maxFileBytes?' · '+L('c.max_file',{size:fmtSize(u.maxFileBytes)}):'')+(u.monthlyReset?' · '+L('c.monthly'):''):L('c.unlimited'));
+ const c3=el('td','',isU?fmtSize(u.usedBytes)+' / '+fmtSize(u.quotaBytes):fmtSize(u.usedBytes));if(isU)c3.append(meter(u.usedBytes,u.quotaBytes));
+ const c4=el('td');c4.append(el('span','chip '+(u.active?'ok':'bad'),u.active?L('a.acc_active'):L('a.acc_disabled')));
+ const c5=el('td','act'),mk=(t,f,c)=>{const b=el('button','btn '+(c||'ghost')+' sm',t);b.onclick=f;c5.append(b)};
+ mk(L('a.acc_settings'),()=>{open_.has(u.id)?open_.delete(u.id):open_.add(u.id);refresh()});
+ mk(u.active?L('a.acc_disable'):L('a.acc_enable'),()=>upd(u,{active:!u.active}));
+ if(isU)mk(L('a.acc_reset_used'),()=>{if(confirm(L('a.acc_reset_confirm',{name:u.username})))upd(u,{resetUsed:true})});
+ mk(L('a.acc_reset'),()=>resetPw(u));mk(L('delete'),()=>delUser(u),'danger');
+ tr.append(c1,c2,c3,c4,c5);tb.append(tr);
+ if(open_.has(u.id)){const t2=document.createElement('tr'),td=el('td');td.colSpan=5;const g=el('div','setgrid');
+  const f=(lbl,inp)=>{const l=el('label','field');l.append(el('span','',lbl),inp);return l};
+  const mkIn=(type,val,min)=>{const i=el('input');i.type=type;if(min!==undefined)i.min=min;i.value=val;return i};
+  const q=mkIn('number',isU?Math.round(u.quotaBytes/MB1):'',1),mf=mkIn('number',u.maxFileBytes?Math.round(u.maxFileBytes/MB1):'',0);mf.placeholder='0';
+  const ex=mkIn('date',u.expiresAt?new Date(u.expiresAt).toISOString().slice(0,10):'');
+  const mr=el('input');mr.type='checkbox';mr.checked=u.monthlyReset;const mrl=el('label','check');mrl.append(mr,el('span','',L('a.acc_monthly')));
+  if(isU){g.append(f(L('a.acc_quota'),q),f(L('a.acc_maxfile'),mf));}
+  g.append(f(L('a.acc_expiry'),ex));if(isU)g.append(mrl);
+  const sv=el('button','btn sm',L('a.acc_save'));sv.onclick=()=>{const b={expiresAt:ex.value?new Date(ex.value+'T23:59:59').getTime():null};if(isU){b.quotaMB=q.value;b.maxFileMB=mf.value||0;b.monthlyReset=mr.checked}upd(u,b)};
+  const row=el('div','');row.style.cssText='display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.4rem';row.append(sv);
+  if(u.totp){const r2=el('button','btn ghost sm',L('a.acc_reset2fa'));r2.onclick=()=>upd(u,{resetTotp:true});row.append(r2)}
+  td.append(g,row);t2.append(td);tb.append(t2)}
+}
+const MB1=1048576;
+async function refresh(){
+ const [links,files,users,acts]=await Promise.all([api('links_list'),api('files_list'),api('users_list'),api('activity_list')]);
+ const act0=links.filter(l=>l.expiresAt>Date.now()&&!(l.oneTime&&l.used>=1)).length,tot=files.reduce((s,f)=>s+f.size,0),sm=$('#sum');sm.innerHTML='';
+ [[act0,'a.s_links'],[files.length,'a.s_files'],[fmtSize(tot),'a.s_storage']].forEach(([n,k])=>{const d=el('div');d.append(el('b','',String(n)),el('span','',L(k)));sm.append(d)});
+ const ub=$('#users');ub.innerHTML='';users.forEach(u=>userRows(u,ub));
+ if(!users.length){const tr=document.createElement('tr'),td=el('td','empty',L('a.acc_none'));td.colSpan=5;tr.append(td);ub.append(tr)}
+ const lb=$('#links');lb.innerHTML='';
+ links.forEach(l=>{const exp=l.expiresAt<Date.now(),used=l.oneTime&&l.used>=1,url=base('upload.php')+'?t='+l.token;
+  const st=exp?['a.st_expired','chip bad']:used?['a.st_used','chip bad']:['a.st_active','chip ok'];
+  const d=el('div','link'),h=el('div','link-h');h.append(el('b','',l.label||L('a.nolabel')),el('span',st[1],L(st[0])));d.append(h);
+  const m=el('div','meta');m.append(el('span','',L('a.owner',{name:l.owner||'-'})),el('span','',L('a.m_max',{size:fmtSize(l.maxBytes)})),el('span','',exp?L('a.m_expired'):L('a.m_until',{date:DT(l.expiresAt)})),el('span','',l.oneTime?L('a.m_single'):L('a.m_multi')),el('span','',L('a.m_uploads',{n:l.used})),el('span','',L('a.m_keep',{n:l.retentionDays})),el('span','',l.maxDownloads>0?L('a.m_dl',{n:l.maxDownloads}):L('a.m_nodl')));d.append(m);
+  const row=el('div','url');row.append(el('code','',url));
+  if(!exp&&!used){const b=el('button','btn sm',L('copy'));b.onclick=ev=>copy(url,ev.target);row.append(b)}
+  const x=el('button','btn danger sm',L('delete'));x.onclick=()=>delLink(l.token);row.append(x);d.append(row);lb.append(d)});
+ if(!links.length)lb.append(el('p','empty',L('a.no_links')));
+ const fb=$('#files');fb.innerHTML='';
+ files.forEach(f=>{const tr=document.createElement('tr'),act=el('td','act');
+  const x=el('button','btn danger sm',L('delete'));x.onclick=()=>delFile(f.id);
+  if(f.pw&&f.group){const c=el('button','btn ghost sm',L('copy'));c.onclick=ev=>copy(base('download.php')+'?g='+f.group,ev.target);act.append(c)}
+  act.append(x);const nm=el('td','name',f.linkLabel||(f.linkToken?L('a.nolabel'):L('c.direct')));if(f.pw)nm.append(' ',el('span','chip',L('a.haspw')));
+  tr.append(nm,el('td','',f.owner||'-'),el('td','',fmtSize(f.size)),el('td','',DT(f.uploadedAt)),el('td','',f.downloads+(f.maxDownloads>0?' / '+f.maxDownloads:'')),el('td','',DT(f.deleteAt)),act);fb.append(tr)});
+ if(!files.length){const tr=document.createElement('tr'),td=el('td','empty',L('a.no_files'));td.colSpan=7;tr.append(td);fb.append(tr)}
+ const ab=$('#acts');ab.innerHTML='';acts.forEach(r=>{const tr=document.createElement('tr');tr.append(el('td','',DT(r.ts)),el('td','',r.username||'-'),el('td','',L('act.'+r.action)),el('td','',r.detail),el('td','',r.ip));ab.append(tr)});
+ if(!acts.length){const tr=document.createElement('tr'),td=el('td','empty',L('c.no_activity'));td.colSpan=5;tr.append(td);ab.append(tr)}}
+async function start(){try{const me=await api('me');if(me.role!=='admin'){location.href='account.php';return}if(!location.search.includes('legacy')){location.href='adm-home.php';return}PUB=me.publicUrl||'';show(true);pubWarn();$('#mb').max=me.maxMBCap;refresh().catch(e=>{show(false);msg('#lerr',e.message)})}catch(e){show(false);if(e.code!=='login')msg('#lerr',e.message)}}
+document.addEventListener('langchange',()=>{if(!$('#main').hidden){pubWarn();refresh()}});
+start();
+</script></body></html>

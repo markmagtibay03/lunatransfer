@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Upgrade | Luna Transfer</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script></head><body>
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><a class="bname" href="index.php" style="color:inherit;text-decoration:none">Luna Transfer</a></div><div class="right"><a class="btn ghost sm" href="account.php">My account</a></div></div></header>
+<main class="wrap narrow"><div class="panel"><h1>Upgrade</h1><p class="sub" id="cur">Loading…</p>
+<div id="plans" style="display:flex;gap:.5rem;flex-wrap:wrap"></div>
+<p class="hint" id="pdesc"></p>
+<div class="two" style="margin-top:.8rem"><label class="field" id="gbf"><span>GB per month</span><input id="gb" type="number" min="1" value="10"></label><label class="field"><span>Months</span><input id="mo" type="number" min="1" max="12" value="1"></label></div>
+<label class="field"><span>Pay by</span><select id="meth"></select></label>
+<p style="font-size:1.3rem;margin:.4rem 0">Total: <b id="tot"></b></p>
+<button class="btn block" onclick="order()">Get payment details</button><div class="alert" id="err" hidden></div>
+<div id="pay" hidden><div class="alert note"><div>Send <b id="pamt"></b> and write <b id="pref"></b> in the message or notes.</div><div id="pto" style="margin-top:.4rem"></div></div>
+<label class="field" style="margin-top:.8rem"><span>Reference / transaction number (after paying)</span><input id="rn"></label>
+<button class="btn block" onclick="paid()">I have paid</button><div class="alert ok" id="ok" hidden></div></div></div>
+<div class="panel"><h2>My orders</h2><div class="scroll"><table><thead><tr><th>Ref</th><th>Plan</th><th>Months</th><th>Amount</th><th>Pay by</th><th>Status</th></tr></thead><tbody id="ord"></tbody></table></div></div></main>
+<script>
+const g=s=>document.querySelector(s);
+const api=async(a,body)=>{const r=await fetch('api.php?action='+a,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-Luna':'1'},body:body?JSON.stringify(body):undefined});
+const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(errText(j)),{status:r.status});return j};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let P={pricePerGB:50,tiers:[]},REF='',PLAN='gb';const fmt=n=>'₱'+Number(n).toLocaleString();const T=k=>P.tiers.find(t=>t.key===k);
+function calc(){const mo=+g('#mo').value||1,t=T(PLAN);g('#tot').textContent=fmt(t?t.price*mo:(+g('#gb').value||0)*mo*P.pricePerGB)}
+function setPlan(k){PLAN=k;document.querySelectorAll('#plans button').forEach(b=>b.className='btn'+(b.dataset.k===k?'':' ghost'));const t=T(k);g('#gbf').hidden=!!t;
+g('#pdesc').textContent=t?`${t.gb} GB every month for ${fmt(t.price)}, plus ${t.subs} team accounts that share the space.`:`${fmt(P.pricePerGB)} for each GB, each month. One account only.`;calc()}
+async function load(){try{const[p,me,o]=await Promise.all([api('plans'),api('me'),api('my_orders')]);P=p;
+if(me.isSub){g('#cur').textContent='You are part of '+me.parentName+'’s team. Your team owner manages the plan.';document.querySelectorAll('.panel').forEach((x,i)=>{if(i)x.hidden=true});document.querySelector('.panel').querySelectorAll(':scope > :not(h1):not(#cur)').forEach(x=>x.hidden=true);return}
+g('#plans').innerHTML=[['gb','Pay per GB'],...p.tiers.map(t=>[t.key,t.name])].map(([k,n])=>`<button class="btn ghost" data-k="${k}" onclick="setPlan('${k}')">${esc(n)}</button>`).join('');
+g('#cur').textContent=me.planGB?`Current plan: ${me.planName}, ${me.planGB} GB per month, ${me.planUntil?'until '+new Date(me.planUntil).toLocaleDateString():'with no end date'}.`:`Free plan: ${p.freeMB} MB. Free refreshes left: ${me.freeResetsLeft}. After that you need a paid plan to keep sending.`;
+g('#meth').innerHTML=p.methods.map(m=>`<option value="${m}">${m==='bank'?'Bank transfer':'GCash'}</option>`).join('')||'<option value="gcash">GCash</option>';
+g('#ord').innerHTML=o.map(r=>`<tr><td>${esc(r.ref)}</td><td>${(T(r.kind)||{name:'Pay per GB'}).name} ${r.gb} GB</td><td>${r.months}</td><td>${fmt(r.amount)}</td><td>${r.method==='bank'?'Bank':'GCash'}</td><td>${r.status}</td></tr>`).join('');setPlan(PLAN)}
+catch(x){if(x.status===401)location.href='account.php'}}
+g('#gb').oninput=g('#mo').oninput=calc;load();
+async function order(){g('#err').hidden=true;try{const r=await api('order_create',{plan:PLAN,gb:+g('#gb').value,months:+g('#mo').value,method:g('#meth').value});REF=r.ref;
+g('#pamt').textContent=fmt(r.amount);g('#pref').textContent=r.ref;g('#pto').innerHTML=r.pay.map(([k,v])=>`${esc(k)}: <b>${esc(v)}</b>`).join('<br>');g('#pay').hidden=false;load()}
+catch(x){g('#err').textContent=x.message;g('#err').hidden=false}}
+async function paid(){await api('order_paid',{ref:REF,payRef:g('#rn').value});g('#ok').textContent='Thank you! We will activate your plan after we verify your payment.';g('#ok').hidden=false;load()}
+</script></body></html>

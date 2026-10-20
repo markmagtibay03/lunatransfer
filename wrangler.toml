@@ -1,0 +1,29 @@
+name = "luna-transfer"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# The website files (public/): scripts, styles and the pages. The Worker serves them, so old URLs like /admin.php still work.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+html_handling = "none"
+
+# R2 bucket for the encrypted files (the bucket stays PRIVATE: only this Worker can read it)
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "luna-files"          # <- change to your bucket name
+
+# D1 database (create it with: npx wrangler d1 create luna-transfer, then paste the id here)
+[[d1_databases]]
+binding = "DB"
+database_name = "luna-transfer"
+database_id = "PASTE-YOUR-D1-ID-HERE"
+
+# Hourly cleanup: expired files, abandoned uploads, monthly quota resets
+[triggers]
+crons = ["0 * * * *"]
+
+# Your own address (the domain must be on your Cloudflare account). Uncomment and edit:
+# routes = [{ pattern = "files.yourdomain.com", custom_domain = true }]

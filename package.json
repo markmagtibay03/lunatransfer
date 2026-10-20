@@ -1,0 +1,13 @@
+{
+  "name": "luna-transfer-cloudflare",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node test/run.mjs"
+  },
+  "dependencies": { "bcryptjs": "^2.4.3" },
+  "devDependencies": { "wrangler": "^4" }
+}

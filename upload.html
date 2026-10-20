@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Send files | Luna Transfer</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script><script src="i18n-extra.js"></script><script src="qr.js"></script><script src="crypto.js"></script><script src="transfer.js"></script></head><body data-title="u.title">
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span class="bname">Luna Transfer</span></div><div class="right"><span id="langslot"></span></div></div></header>
+<main class="wrap split">
+<section class="hero">
+ <h1 data-i="u.h1"></h1><p class="lead" id="info"></p><dl class="facts" id="facts"></dl>
+ <ol class="steps"><li><b data-i="u.s1"></b><span data-i="u.s1d"></span></li><li><b data-i="u.s2"></b><span data-i="u.s2d"></span></li><li><b data-i="u.s3"></b><span data-i="u.s3d"></span></li></ol>
+ <div class="lock"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-i="u.lock"></span></div>
+<div class="tips" id="tips"></div></section>
+<section>
+ <div class="panel"><div id="uploader" hidden></div><p class="sub" id="closed" hidden style="margin:0" data-i="u.closed"></p></div>
+ <div class="panel" id="hist" hidden><h2 data-i="u.hist"></h2><p class="sub" data-i="u.hist_sub"></p><div id="hl"></div></div>
+</section></main><p class="foot" id="foot"></p>
+<script>
+const token=new URLSearchParams(location.search).get('t')||'';
+let max=0,maxFiles=20,linkInfo=null,infoKey='u.checking',up=null;
+const HK='up:'+token,linkOf=e=>pageUrl('download.php')+'?g='+e.gid+(e.key?'#'+e.key:'');
+const renderHist=()=>renderHistPanel($('#hist'),$('#hl'),HK,linkOf);
+
+const siteName=()=>(document.querySelector('.bname')||{}).textContent||'';
+function leftTxt(t){const m=t-Date.now();if(m<=0)return'';const h=Math.floor(m/36e5);return h<1?L('x.left_m'):h<48?L('x.left_h',{n:h}):L('x.left_d',{n:Math.floor(h/24)})}
+function renderTips(keys,title){const t=$('#tips');t.innerHTML='';const h=el('h3','',L(title)),u=el('ul');keys.forEach(k=>u.append(el('li','',L(k))));t.append(h,u);
+ const f=$('#foot');f.innerHTML='';f.append(L('x.own')+' ');const a=el('a','',L('x.own_link'));a.href='register.php';f.append(a)}
+const facts=rows=>{const f=$('#facts');f.innerHTML='';rows.forEach(([k,v])=>f.append(el('dt','',L(k)),el('dd','',String(v))))};
+function renderUpFacts(){if(!linkInfo)return facts([]);const i=linkInfo;facts([['x.sendingto',(i.owner||siteName())+(i.label?' ('+i.label+')':'')],['x.valid_until',DT(i.expiresAt)+(leftTxt(i.expiresAt)?' · '+leftTxt(i.expiresAt):'')],['x.max_total',fmtSize(max)],['x.max_files',maxFiles],['x.kept',L('x.days',{n:i.retentionDays})],['x.dl_limit',i.maxDownloads||L('x.unlimited')],['x.one_time',i.oneTime?L('x.one_yes'):L('x.one_no')]])}
+function renderInfo(){renderUpFacts();renderTips(['x.tip1','x.tip2','x.tip3','x.tip4'],'x.tips');const i=$('#info');if(linkInfo)i.textContent=(linkInfo.label?linkInfo.label+'. ':'')+L('u.info',{size:fmtSize(max),n:maxFiles,date:DT(linkInfo.expiresAt)});else i.textContent=L(infoKey)}
+(async()=>{
+ renderHist();renderInfo();
+ if(!crypto.subtle){infoKey='u.no_https';return renderInfo()}
+ if(!token){infoKey='u.missing';return renderInfo()}
+ const r=await fetch('api.php?action=link_info&t='+encodeURIComponent(token)),j=await r.json().catch(()=>({}));
+ if(!r.ok){$('#info').textContent=errText(j);$('#closed').hidden=false;return}
+ max=j.maxBytes;maxFiles=j.maxFiles||20;linkInfo=j;renderInfo();
+ up=mountUploader($('#uploader'),{token,limit:()=>max,maxFiles:()=>maxFiles,linkOf,histKey:HK,onUploaded:renderHist});$('#uploader').hidden=false})();
+document.addEventListener('langchange',()=>{renderHist();renderInfo();if(up){up.renderRows();up.renderDone()}});
+</script></body></html>

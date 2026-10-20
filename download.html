@@ -1,0 +1,67 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Download | Luna Transfer</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script><script src="i18n-extra.js"></script><script src="crypto.js"></script><script src="transfer.js"></script></head><body data-title="d.title">
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span class="bname">Luna Transfer</span></div><div class="right"><span id="langslot"></span></div></div></header>
+<main class="wrap split">
+<section class="hero"><h1 data-i="d.h1"></h1><p class="lead" id="info"></p><dl class="facts" id="facts"></dl>
+ <div class="lock" style="margin-top:1.6rem"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-i="d.lock"></span></div><div class="tips" id="tips"></div></section>
+<section><div class="panel">
+<div id="box" hidden>
+ <label class="field" id="pwbox" hidden><span data-i="d.pwlabel"></span><input type="password" id="pw" autocomplete="off" onkeydown="if(event.key==='Enter')unlock()"></label>
+ <button class="btn block" id="unl" onclick="unlock()" hidden data-i="d.unlock"></button>
+ <div id="rows"></div>
+ <button class="btn block" id="all" style="margin-top:1rem" onclick="getAll()" hidden data-i="d.all"></button>
+ <p class="hint" id="bighint" hidden data-i="d.big_hint"></p>
+</div>
+<div class="alert" id="msg" hidden></div>
+</div></section></main><p class="foot" id="foot"></p>
+<script>
+const gid=new URLSearchParams(location.search).get('g')||'',hkey=location.hash.slice(1);
+let gm=null,list=[],key=null,infoState={k:'d.checking'};
+const msg=(s,c)=>{const e=$('#msg');e.textContent=s||'';e.hidden=!s;e.className='alert'+(c?' '+c:'')};
+const readMeta=async(k,f)=>JSON.parse(new TextDecoder().decode(await decryptBytes(k,fromB64u(f.meta))));
+
+const siteName=()=>(document.querySelector('.bname')||{}).textContent||'';
+function leftTxt(t){const m=t-Date.now();if(m<=0)return'';const h=Math.floor(m/36e5);return h<1?L('x.left_m'):h<48?L('x.left_h',{n:h}):L('x.left_d',{n:Math.floor(h/24)})}
+function renderTips(keys,title){const t=$('#tips');t.innerHTML='';const h=el('h3','',L(title)),u=el('ul');keys.forEach(k=>u.append(el('li','',L(k))));t.append(h,u);
+ const f=$('#foot');f.innerHTML='';f.append(L('x.own')+' ');const a=el('a','',L('x.own_link'));a.href='register.php';f.append(a)}
+const facts=rows=>{const f=$('#facts');f.innerHTML='';rows.forEach(([k,v])=>f.append(el('dt','',L(k)),el('dd','',String(v))))};
+function renderDlFacts(){if(!gm||!list.length)return facts([]);const rem=list.filter(f=>f.remaining!=null).map(f=>f.remaining),until=Math.min(...list.map(f=>f.deleteAt));
+facts([['x.from',gm.owner||siteName()],['x.files',list.length],['x.total',fmtSize(list.reduce((n,f)=>n+f.size,0))],['x.avail',DT(until)+(leftTxt(until)?' · '+leftTxt(until):'')],...(rem.length?[['x.dl_left',Math.min(...rem)]]:[]),['x.prot',list[0].salt?L('x.pw_yes'):L('x.pw_no')]])}
+function renderInfo(){renderDlFacts();renderTips(['x.d1','x.d2','x.d3','x.d4','x.safe'],'x.dtips');const s=infoState;$('#info').textContent=s.k==='d.info'?L('d.info',{n:list.length,date:DT(s.until)}):s.err?s.err:L(s.k)}
+function render(){const box=$('#rows'),prev=[...box.children].map(r=>[r.querySelector('.fst').textContent,r.querySelector('.fst').className,r.querySelector('.mini i').style.width]);box.innerHTML='';
+ list.forEach((f,i)=>{const r=el('div','frow'),n=el('div','fname'),mini=el('div','mini');mini.append(el('i'));
+  n.append(el('b','',f.name||L('d.file_n',{n:i+1})),el('small','',fmtSize(f.size)+(f.remaining!=null?' · '+(f.remaining===1?L('d.left1'):L('d.left',{n:f.remaining})):'')),mini);
+  const b=el('button','btn sm',L('d.dl'));b.disabled=!key||!!f.busy||!!f.done;b.onclick=()=>getOne(i,b);const fs=el('span','fst');r.append(el('div','ext',f.name?ext(f.name):'?'),n,fs,b);box.append(r);
+  if(prev[i]){fs.textContent=prev[i][0];fs.className=prev[i][1];mini.firstChild.style.width=prev[i][2]}});
+ $('#all').hidden=!key||list.length<2;$('#bighint').hidden=!(key&&!canStream()&&list.reduce((s,f)=>s+f.size,0)>500*1048576)}
+(async()=>{
+ renderInfo();
+ if(!crypto.subtle){infoState={k:'e.no_https'};return renderInfo()}
+ if(!gid){infoState={k:'d.nolink2'};return renderInfo()}
+ const r=await fetch('api.php?action=group_info&g='+encodeURIComponent(gid)),j=await r.json().catch(()=>({}));
+ if(!r.ok){infoState={err:errText(j)};return renderInfo()}
+ list=j.files;gm=j;infoState={k:'d.info',until:Math.min(...list.map(f=>f.deleteAt))};renderInfo();$('#box').hidden=false;
+ if(list[0].salt){$('#pwbox').hidden=false;$('#unl').hidden=false}
+ else{if(!hkey){$('#box').hidden=true;infoState={k:'d.nolink'};return renderInfo()}
+  try{for(const f of list){const m=await readMeta(hkey,f);f.name=m.name;f.type=m.type}key=hkey}catch{$('#box').hidden=true;infoState={k:'d.bad_link2'};return renderInfo()}}
+ render()})();
+async function unlock(){const pw=$('#pw').value;if(!pw)return msg(L('d.needpw'));msg(L('d.checkpw'),'note');
+ try{const k=await deriveKey(pw,fromB64u(list[0].salt));
+  try{for(const f of list){const m=await readMeta(k,f);f.name=m.name;f.type=m.type}}catch{list.forEach(f=>{delete f.name});return msg(L('d.badpw'))}
+  key=k;$('#pwbox').hidden=true;$('#unl').hidden=true;msg();render()}catch(e){msg(e.message)}}
+const manualLink=(res,host)=>{if(!res||!res.url)return;const a=el('a','btn ghost sm',L('d.manual'));a.href=res.url;a.download=res.name;a.style.marginTop='.5rem';a.style.display='inline-block';host.append(a)};
+(()=>{if(inAppBrowser())document.addEventListener('DOMContentLoaded',()=>msg(L('d.inapp'),'note'))})();
+const row=i=>$('#rows').children[i];
+const setSt=(i,t,c)=>{const e=row(i).querySelector('.fst');e.textContent=t;e.className='fst '+(c||'')};
+const setPg=(i,p)=>{row(i).querySelector('.mini i').style.width=Math.round(p*100)+'%'};
+async function getOne(i,btn){btn.disabled=true;list[i].busy=true;msg();setSt(i,L('d.working'));
+ try{const res=await saveFile(list[i],key,p=>setPg(i,p));setPg(i,1);setSt(i,L('d.done'),'ok');list[i].done=true;manualLink(res,row(i).querySelector('.fname'))}
+ catch(e){btn.disabled=false;if(e.name==='AbortError'){setSt(i,'');return}setSt(i,e.message,'bad')}
+ finally{list[i].busy=false}}
+async function getAll(){$('#all').disabled=true;msg();let cur=-1;list.forEach((f,i)=>{setSt(i,L('d.working'));setPg(i,0)});
+ try{const res=await zipSave(list,key,(i,p)=>{cur=i;setPg(i,p);if(p>=1)setSt(i,L('d.done'),'ok')});msg(L('d.zip_done'),'ok');manualLink(res,$('#msg').parentNode)}
+ catch(e){console.error('ZIP failed',e);list.forEach((f,i)=>setSt(i,''));
+  if(e.name!=='AbortError'){if(cur>=0&&cur<list.length)setSt(cur,e.message==='zip4g'?'':e.message,'bad');msg(e.message==='zip4g'?L('d.zip_big'):L('d.zip_fail')+' '+(list[cur]&&list[cur].name?list[cur].name+': ':'')+e.message)}}
+ $('#all').disabled=false}
+document.addEventListener('langchange',()=>{renderInfo();if(list.length)render()});
+</script></body></html>

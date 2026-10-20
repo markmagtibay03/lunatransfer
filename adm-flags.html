@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Flags | Luna Admin</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script><script src="adm.js"></script></head><body>
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span class="bname">Luna Admin</span></div></div></header>
+<main class="wrap"><div id="nav" style="margin-bottom:1.1rem;display:flex;gap:.4rem;flex-wrap:wrap"></div><div class="panel"><h1>Duplicate / suspicious accounts</h1><p class="sub">Accounts that share the same device, the same real email (Gmail dots and +tags are treated as the same), or the same signup IP. IP matches can be innocent (same house or mobile network), so check before disabling.</p>
+<div class="scroll"><table><thead><tr><th>Match</th><th>Key</th><th>Accounts</th><th></th></tr></thead><tbody id="t"></tbody></table></div></div></main><script>let G=[];async function load(){G=await api('adm_flags');g('#t').innerHTML=G.map((x,i)=>`<tr><td><span class="chip ${x.kind==='ip'?'':'bad'}">${x.kind}</span></td><td>${esc(x.key)}</td><td>${x.n}: ${esc(x.names)}</td>
+<td><button class="btn ghost sm" onclick="off(${i})">Disable all but the oldest</button></td></tr>`).join('')||'<tr><td colspan=4>No duplicates found.</td></tr>'}
+async function off(i){const ids=[...G[i].ids].sort((a,b)=>a-b).slice(1);if(!confirm('Disable '+ids.length+' account(s)?'))return;for(const id of ids)await api('users_update',{id,active:false});load()}
+(async()=>{if(await guard())load()})()</script></body></html>

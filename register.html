@@ -1,0 +1,21 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign up | Luna Transfer</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script></head><body>
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><a class="bname" href="index.php" style="color:inherit;text-decoration:none">Luna Transfer</a></div><div class="right"><a class="btn ghost sm" href="account.php">Log in</a></div></div></header>
+
+<main class="wrap narrow"><div class="panel"><h1>Create your free account</h1><p class="sub">Start with <b id="fmb">100</b> MB free. It refreshes <b id="frs">2</b> times, once a month. No card needed.</p>
+<label class="field"><span>Username</span><input id="u" autocomplete="username"></label>
+<label class="field"><span>Email</span><input id="e" type="email" autocomplete="email"></label>
+<label class="field"><span>Password (min. 8 characters)</span><input id="p" type="password" autocomplete="new-password" onkeydown="if(event.key==='Enter')go()"></label>
+<button class="btn block" id="b" onclick="go()">Sign up free</button><div class="alert" id="err" hidden></div>
+<h3 style="margin-top:1.5rem">What you get</h3><ul class="hint" style="padding-left:1.1rem;margin:.4rem 0 0"><li><b id="fmb2">100</b> MB free, refreshed <b id="frs2">2</b> times</li><li>Encrypted links, QR codes and passwords</li><li>Upload links, so other people can send you files without an account</li><li>Upgrade any time by GCash or bank transfer</li></ul>
+<p class="hint">Already have an account? <a href="account.php">Log in</a></p></div></main>
+<script>const g=s=>document.querySelector(s);
+const api=async(a,body)=>{const r=await fetch('api.php?action='+a,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-Luna':'1'},body:body?JSON.stringify(body):undefined});
+const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(errText(j)),{status:r.status});return j};
+
+const dev=(()=>{try{let d=localStorage.lunadev||(document.cookie.match(/lunadev=([a-f0-9]{32})/)||[])[1];if(!d){d=[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,'0')).join('')}localStorage.lunadev=d;document.cookie='lunadev='+d+';max-age=315360000;path=/;samesite=strict';return d}catch(e){return''}})();
+api('plans').then(p=>{g('#fmb').textContent=p.freeMB;g('#frs').textContent=g('#frs2').textContent=p.freeResets;g('#fmb2').textContent=p.freeMB}).catch(()=>{});
+async function go(){g('#err').hidden=true;g('#b').disabled=true;
+try{await api('register',{username:g('#u').value.trim(),email:g('#e').value.trim(),password:g('#p').value,device:dev});location.href='account.php'}
+catch(x){g('#err').textContent=x.message;g('#err').hidden=false;g('#b').disabled=false}}
+</script></body></html>

@@ -1,0 +1,151 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My account | Luna Transfer</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script><script src="login-ui.js"></script><script src="i18n-extra.js"></script><script src="qr.js"></script><script src="crypto.js"></script><script src="transfer.js"></script></head><body data-title="c.title">
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span class="bname">Luna Transfer</span></div>
+<div class="right"><span id="langslot"></span><span class="who" id="who"></span><a class="btn sm" href="upgrade.php">Upgrade</a><a class="btn ghost sm" id="adm" href="admin.php" hidden data-i="c.admin_panel"></a><button class="btn ghost sm" id="out" hidden onclick="logout()" data-i="logout">Log out</button></div></div></header>
+
+<main class="wrap lg" id="login" hidden>
+<div class="lcard"><aside class="lside"><svg class="lmoon" viewBox="0 0 150 150" aria-hidden="true"><defs><clipPath id="lmc"><circle cx="75" cy="75" r="70"/></clipPath></defs><circle cx="75" cy="75" r="70" fill="#f4c64e"/><g clip-path="url(#lmc)"><circle cx="112" cy="62" r="66" fill="#141745"/></g><circle cx="75" cy="75" r="70" fill="none" stroke="#3a3f9b" stroke-width="2"/></svg><h2 data-i="l.hero"></h2><p data-i="l.hero_sub"></p></aside>
+<section class="lform"><h1 data-i="a.login">Log in</h1><p class="sub" data-i="c.login_sub"></p>
+<label class="field"><span data-i="a.username"></span><input type="text" id="u" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+<label class="field"><span data-i="a.password"></span><div class="pwrap"><input type="password" id="p" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"><button type="button" id="pwtoggle" aria-pressed="false"></button></div></label>
+<label class="field" id="codebox" hidden><span data-i="a.code"></span><input type="text" id="lc" inputmode="numeric" autocomplete="one-time-code" maxlength="8" onkeydown="if(event.key==='Enter')login()"></label>
+<button class="btn block" id="lbtn" onclick="login()" data-i="a.login">Log in</button><div class="alert" id="lerr" role="alert" hidden></div><p class="lalt"><span data-i="l.noacc"></span> <a href="register.php" data-i="l.signup"></a></p></section></div></main>
+
+<main class="wrap" id="main" hidden>
+<div class="alert note" id="pubwarn" hidden style="margin:0 0 1.25rem"></div>
+<nav class="tabs2" id="nav"><button class="on" data-t="home" onclick="go('home')" data-i="x.n_home"></button><button data-t="send" onclick="go('send')" data-i="c.tab_send"></button><button data-t="links" onclick="go('links')" data-i="x.n_links"></button><button data-t="transfers" onclick="go('transfers')" data-i="x.n_tr"></button><button data-t="team" onclick="go('team')" data-i="x.n_team" hidden></button><button data-t="settings" onclick="go('settings')" data-i="x.n_set"></button></nav>
+<div data-sec="home"><div class="panel hero-q"><div><p class="hq-lab" data-i="x.usable"></p>
+ <div class="hq-big"><span id="ub">–</span><small id="uof"></small></div><div class="meter" id="qm"><i></i></div>
+ <p class="hq-sub"><span id="qa"></span><span id="qb" hidden></span></p><p class="hq-sub" id="umax" style="margin-top:.2rem"></p>
+ <div class="alert" id="qw" hidden></div><p class="hint" id="qx"></p><p class="hint" data-i="x.count_note"></p></div>
+ <div class="hq-side" id="planbox" hidden><h3 id="plant"></h3><p id="plans"></p><a class="btn" href="upgrade.php" id="planb">Upgrade</a></div></div>
+<div class="stats3" id="stats"></div>
+<div class="qa"><button class="btn" onclick="go('send')" data-i="c.tab_send"></button><button class="btn ghost" onclick="go('links')" data-i="c.tab_link"></button></div></div>
+<div data-sec="send" hidden><div class="panel"><h2 data-i="c.tab_send"></h2><p class="sub" data-i="c.send_sub"></p><div id="uploader"></div></div></div>
+<div data-sec="links" hidden><div class="cols2"><div class="panel"><h2 data-i="c.tab_link"></h2><p class="sub" data-i="c.link_sub"></p>
+   <label class="field"><span data-i="a.label"></span><input type="text" id="label" data-ip="a.label_ph"></label>
+   <div class="two"><label class="field"><span data-i="a.max"></span><input type="number" id="mb" value="50" min="1"></label><label class="field"><span data-i="a.valid"></span><input type="number" id="hrs" value="24" min="1"></label></div>
+   <div class="two"><label class="field"><span data-i="c.keep"></span><input type="number" id="days" value="7" min="1"></label><label class="field"><span data-i="a.dllimit"></span><input type="number" id="dl2" value="0" min="0"></label></div>
+   <label class="check"><input type="checkbox" id="one"><span><span data-i="a.one"></span><small data-i="a.one_sub"></small></span></label>
+   <p class="hint" data-i="x.linkhint"></p><button class="btn block" onclick="createLink()" data-i="a.make"></button><div class="alert" id="cerr" hidden></div></div><div class="panel"><h2 data-i="c.mylinks"></h2><div id="links"></div></div></div></div>
+<div data-sec="transfers" hidden><div class="panel"><h2 data-i="c.myfiles"></h2><p class="sub" data-i="x.tr_sub"></p><div id="tlist"></div><p style="margin:.8rem 0 0"><button class="btn ghost sm" id="tmore" onclick="toggleAll()" hidden></button></p></div></div>
+<div data-sec="team" hidden><div class="panel" id="teampanel"><h2 data-i="x.team"></h2><p class="sub" id="teamsub"></p><div class="stats3" id="teamsum" style="margin-top:1rem"></div><div id="teamlist"></div>
+<div class="two" style="margin-top:1.2rem" id="teamform"><label class="field"><span data-i="x.t_user"></span><input id="tuser" autocomplete="off"></label><label class="field"><span data-i="x.t_pass"></span><input id="tpass" autocomplete="off"></label></div>
+<button class="btn" id="tadd" onclick="subAdd()" data-i="x.t_add"></button><div class="alert" id="terr2" hidden></div></div></div>
+<div data-sec="settings" hidden><div class="cols2"><div class="panel"><h2 data-i="c.security"></h2>
+   <h3 data-i="c.chpw"></h3>
+   <div class="two"><label class="field"><span data-i="c.pw_current"></span><input type="password" id="pcur" autocomplete="current-password"></label><label class="field"><span data-i="c.pw_new"></span><input type="password" id="pnew" autocomplete="new-password"></label></div>
+   <button class="btn ghost" onclick="changePw()" data-i="c.pw_save"></button><div class="alert" id="pwerr" hidden></div><div class="alert ok" id="pwok" hidden></div>
+   <h3 style="margin-top:1.4rem" data-i="c.twofa"></h3><p class="sub" data-i="c.twofa_sub"></p>
+   <div id="toff0"><span class="chip bad" data-i="c.off"></span> <button class="btn ghost sm" onclick="totpStart()" data-i="c.enable"></button></div>
+   <div id="tsetup" hidden><p class="hint" data-i="c.twofa_scan"></p><div class="qr" id="tqr" style="margin:.6rem 0"></div><p class="hint"><code id="tsec"></code></p>
+    <label class="field"><span data-i="c.twofa_code"></span><input type="text" id="tcode" inputmode="numeric" maxlength="8"></label><button class="btn sm" onclick="totpOn()" data-i="c.enable"></button></div>
+   <div id="ton" hidden><span class="chip ok" data-i="c.on"></span>
+    <div class="two" style="margin-top:.7rem"><label class="field"><span data-i="c.pw_current"></span><input type="password" id="tpw" autocomplete="off"></label><label class="field"><span data-i="c.twofa_code"></span><input type="text" id="tcode2" inputmode="numeric" maxlength="8"></label></div>
+    <button class="btn ghost sm" onclick="totpOff()" data-i="c.disable"></button></div>
+   <div class="alert" id="terr" hidden></div>
+   <div id="tgbox" hidden><h3 style="margin-top:1.4rem" data-i="c.telegram"></h3><p class="sub" data-i="c.telegram_sub"></p>
+    <div class="url"><input type="text" id="tgchat" style="border:0;background:transparent" data-ip="c.telegram_ph"><button class="btn sm" onclick="saveTg()" data-i="a.acc_save"></button></div><div class="alert ok" id="tgok" hidden></div></div>
+  </div>
+  <div class="panel"><h2 data-i="c.activity"></h2><div class="scroll"><table><thead><tr><th data-i="c.act_time"></th><th data-i="c.act_what"></th><th data-i="c.act_detail"></th></tr></thead><tbody id="acts"></tbody></table></div></div></div></div>
+</main>
+
+<script>
+const MB=1048576;let ME=null,PUB='',HK='',up=null;
+const api=async(action,{method='GET',body,query=''}={})=>{
+ const r=await fetch('api.php?action='+action+query,{method,headers:{'Content-Type':'application/json','X-Luna':'1'},body:body?JSON.stringify(body):undefined});
+ if(r.status===401&&action!=='login'){show(false);throw Object.assign(new Error('login'),{code:'login'})}
+ const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(errText(j)),{code:j.error});return j};
+const show=m=>{$('#main').hidden=!m;$('#login').hidden=m;$('#out').hidden=!m;if(!m){$('#who').textContent='';$('#adm').hidden=true}};
+const msg2=(id,s)=>{$(id).textContent=s||'';$(id).hidden=!s};
+const base=f=>pageUrl(f,PUB);
+const urlOf=e=>base('download.php')+'?g='+e.gid+(e.key?'#'+e.key:'');
+function pubWarn(){const h=location.hostname,w=$('#pubwarn');const local=['localhost','127.0.0.1','::1','[::1]'].includes(h);w.hidden=!(local&&!PUB);w.textContent=L('a.localhost_warn',{host:h})}
+async function login(){try{await api('login',{method:'POST',body:{username:$('#u').value,password:$('#p').value,code:$('#lc').value}});msg2('#lerr');$('#codebox').hidden=true;$('#lc').value='';start()}
+ catch(e){if(e.code==='code_required')$('#codebox').hidden=false;msg2('#lerr',e.message)}}
+async function logout(){await api('logout',{method:'POST'});up=null;ME=null;$('#uploader').innerHTML='';show(false)}
+function go(t){if(!document.querySelector('[data-sec="'+t+'"]'))t='home';document.querySelectorAll('[data-sec]').forEach(e=>e.hidden=e.dataset.sec!==t);document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);window.scrollTo(0,0)}
+function tab(n){go(n===2?'links':'send')}
+const left=()=>ME.quotaBytes===null?Infinity:Math.max(0,ME.quotaBytes-ME.usedBytes);
+function renderQuota0(){if(!ME)return;const q=ME.quotaBytes,u=ME.usedBytes,m=$('#qm'),x=[];
+ if(ME.maxFileBytes)x.push(L('c.max_file',{size:fmtSize(ME.maxFileBytes)}));if(ME.monthlyReset)x.push(L('c.monthly'));if(ME.expiresAt)x.push(L('c.expires',{date:DT(ME.expiresAt)}));$('#qx').textContent=x.join(' · ');
+ if(q===null){$('#qa').textContent=fmtSize(u);$('#qb').textContent=L('c.unlimited');m.hidden=true;msg2('#qw');return}
+ const pct=q?u/q*100:100;$('#qa').textContent=L('c.used_of',{used:fmtSize(u),total:fmtSize(q)});$('#qb').textContent=L('c.left',{left:fmtSize(left())});
+ m.hidden=false;m.className='meter'+(pct>=100?' full':pct>=85?' warn':'');m.firstChild.style.width=Math.min(100,pct)+'%';
+ const w=$('#qw');w.hidden=pct<85;w.textContent=pct>=100?L('c.full'):L('c.low')}
+async function createLink(){try{await api('my_links_create',{method:'POST',body:{label:$('#label').value,maxMB:$('#mb').value,expiryHours:$('#hrs').value,retentionDays:$('#days').value,maxDownloads:$('#dl2').value,oneTime:$('#one').checked}});msg2('#cerr');$('#label').value='';refresh()}catch(e){msg2('#cerr',e.message)}}
+async function delLink(t){if(confirm(L('a.confirm_link'))){await api('my_links_delete',{method:'POST',body:{token:t}});refresh()}}
+async function delFile(id){if(confirm(L('a.confirm_file'))){await api('my_file_delete',{method:'POST',body:{id}});refresh()}}
+async function refresh(){
+ const [me,links,fl]=await Promise.all([api('me'),api('my_links_list'),api('my_files_list')]);ME=me;PUB=me.publicUrl||'';pubWarn();renderQuota();if(up)up.renderRows();renderSecurity();loadActivity();
+ const hist={};loadHist(HK).forEach(e=>hist[e.gid]=e);
+ const lb=$('#links');lb.innerHTML='';
+ links.forEach(l=>{const exp=l.expiresAt<Date.now(),used=l.oneTime&&l.used>=1,url=base('upload.php')+'?t='+l.token;
+  const st=exp?['a.st_expired','chip bad']:used?['a.st_used','chip bad']:['a.st_active','chip ok'];
+  const d=el('div','link'),h=el('div','link-h');h.append(el('b','',l.label||L('a.nolabel')),el('span',st[1],L(st[0])));d.append(h);
+  const m=el('div','meta');m.append(el('span','',L('a.m_max',{size:fmtSize(l.maxBytes)})),el('span','',exp?L('a.m_expired'):L('a.m_until',{date:DT(l.expiresAt)})),el('span','',l.oneTime?L('a.m_single'):L('a.m_multi')),el('span','',L('a.m_uploads',{n:l.used})),el('span','',L('a.m_keep',{n:l.retentionDays})),el('span','',l.maxDownloads>0?L('a.m_dl',{n:l.maxDownloads}):L('a.m_nodl')));d.append(m);
+  const row=el('div','url');row.append(el('code','',url));
+  if(!exp&&!used){const b=el('button','btn sm',L('copy'));b.onclick=ev=>copyText(url,ev.target);row.append(b)}
+  const x=el('button','btn danger sm',L('delete'));x.onclick=()=>delLink(l.token);row.append(x);d.append(row);if(!exp&&!used)d.append(linkTools(url));lb.append(d)});
+ if(!links.length)lb.append(el('p','empty',L('a.no_links')));
+ renderTransfers(fl,hist);renderStats(links,fl)}
+let showAll=false,LASTFL=[],LASTHIST={};
+const IC='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>';
+function renderQuota(){renderQuota0();const q=ME.quotaBytes,lf=left();$('#ub').textContent=q===null?L('c.unlimited'):fmtSize(lf);$('#uof').textContent=q===null?'':L('x.usable_of',{total:fmtSize(q)});
+ const mx=Math.min(ME.maxMBCap*MB,lf,ME.maxFileBytes||Infinity);$('#umax').textContent=lf>0?L('x.can_send',{size:fmtSize(mx)}):L('x.none_left');
+ if(q!==null){const pct=q?ME.usedBytes/q*100:100;$('#qm').className='meter'+(pct>=100?' full':pct>=85?' warn':'')}}
+function toggleAll(){showAll=!showAll;renderTransfers(LASTFL,LASTHIST)}
+function renderTransfers(fl,hist){LASTFL=fl;LASTHIST=hist;const box=$('#tlist');box.innerHTML='';const G=new Map();fl.forEach(f=>{if(!G.has(f.group))G.set(f.group,[]);G.get(f.group).push(f)});const gs=[...G.values()],more=$('#tmore');
+ if(!gs.length){box.append(el('p','empty',L('a.no_files')));more.hidden=true;return}
+ (showAll?gs:gs.slice(0,6)).forEach(fs=>{const f=fs[0],size=fs.reduce((n,x)=>n+x.size,0),dl=Math.max(...fs.map(x=>x.downloads)),h=hist[f.group],cl=h?urlOf(h):(f.pw?base('download.php')+'?g='+f.group:null),until=Math.min(...fs.map(x=>x.deleteAt));
+  const c=el('div','tcard'),ic=el('div','tic'),b=el('div','tbody'),a=el('div','tact');ic.innerHTML=IC;
+  b.append(el('b','',f.linkToken?L('a.th_link')+': '+(f.linkLabel||L('a.nolabel')):L('c.direct')),el('div','tmeta',[fs.length===1?L('x.nfiles1'):L('x.nfilesn',{n:fs.length}),fmtSize(size),L('a.th_up')+' '+DT(f.uploadedAt)].join(' · ')));
+  const ch=el('div','tchips');ch.append(el('span','chip',L('a.th_dl')+': '+dl+(f.maxDownloads>0?' / '+f.maxDownloads:'')),el('span',until-Date.now()<172800000?'chip bad':'chip',L('a.th_del')+' '+DT(until)));if(f.pw)ch.append(el('span','chip',L('a.haspw')));b.append(ch);
+  if(cl){const k=el('button','btn ghost sm',L('copy'));k.onclick=()=>{navigator.clipboard.writeText(cl);k.textContent=L('copied')};a.append(k)}
+  const x=el('button','btn danger sm',L('delete'));x.onclick=async()=>{if(confirm(L('x.confirm_tr'))){await Promise.all(fs.map(y=>api('my_file_delete',{method:'POST',body:{id:y.id}})));refresh()}};a.append(x);
+  c.append(ic,b,a);box.append(c)});
+ more.hidden=gs.length<=6;more.textContent=showAll?L('x.show_less'):L('x.show_all',{n:gs.length})}
+function renderStats(links,fl){const gs=new Map();fl.forEach(f=>gs.set(f.group,Math.max(gs.get(f.group)||0,f.downloads)));const act=links.filter(l=>l.expiresAt>Date.now()&&!(l.oneTime&&l.used>=1)).length;
+ const box=$('#stats');box.innerHTML='';[[gs.size,'x.st_tr'],[act,'x.st_links'],[[...gs.values()].reduce((n,x)=>n+x,0),'x.st_dl']].forEach(([n,k])=>{const d=el('div','stat');d.append(el('b','',String(n)),el('span','',L(k)));box.append(d)})}
+// ---- security ----
+function renderSecurity(){$('#toff0').hidden=ME.totp||!$('#tsetup').hidden;$('#ton').hidden=!ME.totp;$('#tgbox').hidden=!ME.telegramAvailable;if(document.activeElement!==$('#tgchat'))$('#tgchat').value=ME.telegram||''}
+async function changePw(){msg2('#pwerr');msg2('#pwok');try{await api('change_password',{method:'POST',body:{current:$('#pcur').value,new:$('#pnew').value}});$('#pcur').value='';$('#pnew').value='';msg2('#pwok',L('c.pw_changed'))}catch(e){msg2('#pwerr',e.message)}}
+async function totpStart(){try{const j=await api('totp_setup',{method:'POST',body:{}});$('#tqr').innerHTML=qrSvg(j.uri);$('#tsec').textContent=j.secret;$('#tsetup').hidden=false;$('#toff0').hidden=true;msg2('#terr')}catch(e){msg2('#terr',e.message)}}
+async function totpOn(){try{await api('totp_enable',{method:'POST',body:{code:$('#tcode').value}});$('#tsetup').hidden=true;$('#tcode').value='';msg2('#terr');refresh()}catch(e){msg2('#terr',e.message)}}
+async function totpOff(){try{await api('totp_disable',{method:'POST',body:{password:$('#tpw').value,code:$('#tcode2').value}});$('#tpw').value='';$('#tcode2').value='';msg2('#terr');refresh()}catch(e){msg2('#terr',e.message)}}
+async function saveTg(){try{await api('set_telegram',{method:'POST',body:{chat:$('#tgchat').value}});msg2('#tgok',L('c.saved'));setTimeout(()=>msg2('#tgok'),2000)}catch(e){msg2('#tgok',e.message)}}
+async function loadActivity(){const a=await api('my_activity'),tb=$('#acts');tb.innerHTML='';
+ a.forEach(r=>{const tr=document.createElement('tr');tr.append(el('td','',DT(r.ts)),el('td','',L('act.'+r.action)),el('td','',r.detail));tb.append(tr)});
+ if(!a.length){const tr=document.createElement('tr'),td=el('td','empty',L('c.no_activity'));td.colSpan=3;tr.append(td);tb.append(tr)}}
+async function start(){try{const me=await api('me');ME=me;PUB=me.publicUrl||'';HK='my:'+me.uid;show(true);$('#who').textContent=me.username;$('#adm').hidden=me.role!=='admin';$('#mb').max=me.maxMBCap;
+ if(!up)up=mountUploader($('#uploader'),{token:null,limit:()=>Math.min(ME.maxMBCap*MB,left()),maxFiles:()=>ME.maxFiles,maxFileBytes:()=>ME.maxFileBytes,histKey:HK,linkOf:urlOf,onUploaded:refresh,
+  extraHtml:'<div class="two" style="margin-top:1rem"><label class="field"><span data-i="c.keep"></span><input type="number" id="sdays" value="7" min="1"></label><label class="field"><span data-i="a.dllimit"></span><input type="number" id="sdl" value="0" min="0"></label></div>',
+  extra:()=>({retentionDays:Math.max(1,parseInt($('#sdays').value)||7),maxDownloads:Math.max(0,parseInt($('#sdl').value)||0)})});
+ refresh().catch(e=>{show(false);msg2('#lerr',e.message)})}catch(e){show(false);if(e.code!=='login')msg2('#lerr',e.message)}}
+document.addEventListener('langchange',()=>{if(ME&&!$('#main').hidden){refresh();if(up){up.renderRows();up.renderDone()}pubWarn()}});
+go((location.hash||'#home').slice(1));start();
+</script><script>
+(function(){const q=s=>document.querySelector(s);
+async function team(me){const box=q('[data-t=team]'),ok=!me.isSub&&me.subLimit>0;box.hidden=!ok;if(!ok){if(location.hash==='#team')go('home');return}
+ const j=await api('sub_list'),used=j.subs.reduce((n,s)=>n+s.usedBytes,0);q('#teamsub').textContent=L('x.t_sub',{n:j.subs.length,max:j.limit});
+ const sm=q('#teamsum');sm.innerHTML='';[[fmtSize(me.ownUsed),'x.t_you'],[fmtSize(used),'x.t_total'],[j.subs.length+' / '+j.limit,'x.t_slots']].forEach(([v,k])=>{const d=el('div','stat');d.append(el('b','',v),el('span','',L(k)));sm.append(d)});
+ const lb=q('#teamlist');lb.innerHTML='';
+ j.subs.forEach(s=>{const c=el('div','tcard'),ic=el('div','tic','👤'),b=el('div','tbody'),a=el('div','tact'),pct=me.quotaBytes?Math.round(s.usedBytes/me.quotaBytes*100):0;
+  b.append(el('b','',s.username),el('div','tmeta',[L('x.t_used',{size:fmtSize(s.usedBytes)}),L('x.t_share',{p:pct}),L('x.t_up',{n:s.uploads}),s.lastAt?L('x.t_last',{date:DT(s.lastAt)}):L('x.t_never')].join(' · ')));
+  const bar=el('div','sbar'),i=el('i');i.style.width=Math.min(100,pct)+'%';bar.append(i);b.append(bar);const ch=el('div','tchips');ch.append(el('span',s.active?'chip ok':'chip bad',s.active?L('a.st_active'):L('x.t_off')));b.append(ch);
+  const pw=el('button','btn ghost sm',L('x.t_pw'));pw.onclick=async()=>{const p=prompt(L('x.t_newpw'));if(p){try{await api('sub_update',{method:'POST',body:{id:s.id,password:p}});alert(L('c.saved'))}catch(e){alert(e.message)}}};
+  const tg=el('button','btn ghost sm',s.active?L('x.t_disable'):L('x.t_enable'));tg.onclick=async()=>{await api('sub_update',{method:'POST',body:{id:s.id,active:!s.active}});fill()};
+  const x=el('button','btn danger sm',L('delete'));x.onclick=async()=>{if(confirm(L('x.t_confirm'))){await api('sub_delete',{method:'POST',body:{id:s.id}});fill()}};
+  a.append(pw,tg,x);c.append(ic,b,a);lb.append(c)});
+ q('#teamform').hidden=q('#tadd').hidden=j.subs.length>=j.limit}
+window.subAdd=async()=>{try{msg2('#terr2');await api('sub_create',{method:'POST',body:{username:q('#tuser').value.trim(),password:q('#tpass').value}});q('#tuser').value=q('#tpass').value='';fill()}catch(e){msg2('#terr2',e.message)}};
+async function fill(){try{const[p,me]=await Promise.all([fetch('api.php?action=plans').then(x=>x.json()),api('me')]);
+ const up=document.querySelector('.top .right a[href="upgrade.php"]');if(up)up.hidden=me.isSub||me.role==='admin';if(me.role==='admin')return;
+ const nx=new Date(new Date().getFullYear(),new Date().getMonth()+1,1).toLocaleDateString(),box=q('#planbox'),btn=q('#planb');
+ if(me.isSub){q('#plant').textContent=L('x.t_member',{name:me.parentName});q('#plans').textContent=L('x.t_shared');btn.hidden=true;box.hidden=false}
+ else if(me.planGB){const d=me.planUntil?Math.max(0,Math.ceil((me.planUntil-Date.now())/864e5)):null;q('#plant').textContent=me.planName+': '+me.planGB+' GB per month';
+  q('#plans').textContent=(me.planUntil?'Active until '+new Date(me.planUntil).toLocaleDateString()+' ('+d+' days left).':'Active, no end date.')+' Space resets on '+nx+'.';btn.textContent='Extend or change plan';box.hidden=false}
+ else if(me.freeTier){q('#plant').textContent='Free plan: '+p.freeMB+' MB';q('#plans').textContent=me.freeResetsLeft>0?'Your space refreshes on '+nx+'. Free refreshes left: '+me.freeResetsLeft+'.':'No free refreshes left. When your space runs out, upgrade to keep sending.';box.hidden=false}
+ await team(me)}catch(e){}}
+const m=q('#main');new MutationObserver(()=>{if(!m.hidden)fill()}).observe(m,{attributes:true,attributeFilter:['hidden']});if(!m.hidden)fill()})();
+</script></body></html>

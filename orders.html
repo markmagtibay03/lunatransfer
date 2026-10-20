@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payments | Luna Admin</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script><script src="adm.js"></script></head><body>
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span class="bname">Luna Admin</span></div></div></header>
+<main class="wrap"><div id="nav" style="margin-bottom:1.1rem;display:flex;gap:.4rem;flex-wrap:wrap"></div><div class="panel"><h1>Payments</h1><p class="sub">Check your GCash or bank account, then approve. "paid" = the customer says they paid.</p>
+<div class="scroll"><table><thead><tr><th>Ref</th><th>User</th><th>Plan</th><th>Amount</th><th>Method / ref no.</th><th>Status</th><th></th></tr></thead><tbody id="t"></tbody></table></div></div></main><script>async function load(){const o=await api('orders_list');g('#t').innerHTML=o.map(r=>`<tr><td>${esc(r.ref)}</td><td>${esc(r.username)}<br><small>${esc(r.email)}</small></td><td>${PN[r.kind]||'Pay per GB'} ${r.gb} GB × ${r.months} mo</td><td>${php(r.amount)}</td><td>${r.method==='bank'?'Bank transfer':'GCash'}<br><small>${esc(r.pay_ref)}</small></td><td>${r.status}</td>
+<td>${r.status==='approved'||r.status==='rejected'?'':`<button class="btn sm" onclick="d(${r.id},1)">Approve</button> <button class="btn ghost sm" onclick="d(${r.id},0)">Reject</button>`}</td></tr>`).join('')}
+async function d(id,a){await api('orders_decide',{id,approve:a});load()}
+(async()=>{if(await guard())load()})()</script></body></html>

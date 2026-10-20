@@ -1,0 +1,7 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Overview | Luna Admin</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script><script src="adm.js"></script></head><body>
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span class="bname">Luna Admin</span></div></div></header>
+<main class="wrap"><div id="nav" style="margin-bottom:1.1rem;display:flex;gap:.4rem;flex-wrap:wrap"></div><div class="panel"><h1>Overview</h1><div id="s" class="two" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))"></div></div></main><script>(async()=>{if(!await guard())return;const s=await api('adm_stats');
+const c=(t,v,h)=>`<div class="panel" style="padding:1rem"><div class="hint" style="margin:0">${t}</div><div style="font-size:1.5rem;font-weight:700">${v}</div></div>`;
+g('#s').innerHTML=[c('Accounts',s.users),c('Paid',s.paid),c('New (7 days)',s.new7),c('Unverified email',s.unverified),c('Disabled',s.disabled),c('Transfers (24h)',s.tx24),c('Uploaded (30 days)',fB(s.bytes30)),
+c('Revenue (all time)',php(s.revenue)),c('Revenue (this month)',php(s.revenueMonth)),c('Payments to check',s.pending),c('Duplicate groups',s.flags)].join('')})()</script></body></html>

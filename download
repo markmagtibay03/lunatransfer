@@ -1,0 +1,21 @@
+# dependencies and build output
+node_modules/
+.wrangler/
+dist/
+
+# SECRETS and PRIVATE DATA: never commit these
+.dev.vars
+.env
+*.env
+luna_transfer.sql
+d1-data.sql
+backup*.sql
+*.zip
+data/
+files/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

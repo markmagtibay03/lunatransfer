@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Transactions | Luna Admin</title>
+<link rel="stylesheet" href="style.css"><script src="i18n.js"></script><script src="adm.js"></script></head><body>
+<header class="top"><div><div class="brand"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span class="bname">Luna Admin</span></div></div></header>
+<main class="wrap"><div id="nav" style="margin-bottom:1.1rem;display:flex;gap:.4rem;flex-wrap:wrap"></div><div class="panel"><h1>All transactions</h1><p class="sub">Every upload and download, free and paid accounts.</p>
+<div class="two" style="grid-template-columns:1fr 150px 150px auto;align-items:end"><label class="field"><span>Search (user or IP)</span><input id="q" onkeydown="if(event.key==='Enter')load(1)"></label>
+<label class="field"><span>Type</span><select id="k"><option value="">All</option><option value="upload">Uploads</option><option value="download">Downloads</option></select></label>
+<label class="field"><span>Plan</span><select id="f"><option value="">All</option><option value="free">Free</option><option value="paid">Paid</option></select></label><button class="btn" onclick="load(1)">Filter</button></div>
+<div class="scroll"><table><thead><tr><th>Time</th><th>User</th><th>Plan</th><th>Type</th><th>Size</th><th>IP</th></tr></thead><tbody id="t"></tbody></table></div><div id="pg"></div></div></main><script>async function load(p=1){try{const r=await api('adm_tx&page='+p+'&k='+g('#k').value+'&f='+g('#f').value+'&q='+encodeURIComponent(g('#q').value));
+g('#t').innerHTML=r.rows.map(x=>`<tr><td>${fD(x.ts)}</td><td>${esc(x.username||'(guest)')}</td><td>${x.plan_gb>0?'Paid':'Free'}</td><td>${x.kind}</td><td>${fB(+x.bytes)}</td><td>${esc(x.ip)}</td></tr>`).join('');g('#pg').innerHTML=pager(r.total,50,p,'load')}catch(e){}}
+(async()=>{if(await guard())load(1)})()</script></body></html>
